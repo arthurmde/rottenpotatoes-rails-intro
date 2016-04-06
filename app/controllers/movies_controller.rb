@@ -12,7 +12,13 @@ class MoviesController < ApplicationController
 
   def index
     @class_name = params[:sort]
+    @all_ratings = Movie.ratings
     @movies = Movie.order(params[:sort])
+    @checked_ratings=@all_ratings
+    if(params["commit"] == "Refresh" && params["ratings"])
+      @movies = @movies.where("rating IN (?)", params['ratings'].keys)
+      @checked_ratings = params["ratings"]
+    end
   end
 
   def new
