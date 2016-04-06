@@ -11,13 +11,35 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @class_name = params[:sort]
-    @all_ratings = Movie.ratings
-    @movies = Movie.order(params[:sort])
-    @checked_ratings=@all_ratings
-    if(params["commit"] == "Refresh" && params["ratings"])
-      @movies = @movies.where("rating IN (?)", params['ratings'].keys)
-      @checked_ratings = params["ratings"]
+    if (session[:sort] && !params[:sort])
+      flash.keep
+      sort = session[:sort]      
+      session[:sort] = nil
+      params[:sort] = sort
+      redirect_to movies_path(params)
+    elsif(session[:ratings] && !params[:ratings])
+      flash.keep
+      ratings = session[:ratings]
+      session[:ratings] = nil
+      params[:ratings] = ratings if ratings
+      params[:commit] = "Refresh"
+      redirect_to movies_path(params)
+    else
+      sort_param = params[:sort]
+      @class_name = sort_param
+      @all_ratings = Movie.ratings
+      @checked_ratings = @all_ratings
+      @movies = Movie.all 
+
+      if(params["commit"] == "Refresh" && params["ratings"])
+        puts "#"*100
+        session[:ratings] = params["ratings"]
+        @checked_ratings = params["ratings"].keys
+      end
+
+      @movies = @movies.where("rating IN (?)", @checked_ratings)
+      @movies = @movies.order(sort_param)
+      session[:sort] = sort_param
     end
   end
 
